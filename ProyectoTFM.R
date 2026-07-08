@@ -1,11 +1,12 @@
 # ---------------------------------------------
-# TFM - Analysis
+# TFM - Análisis transcriptómico
 # Latest date: 31/03/2026
-# Author: Marina Delgado
+# Autor: Marina Delgado
+# Máster Universitario en Bioinformática (VIU)
 # --------------------------------------------
-# Data files:
-# data_mrna_seq_tpm.txt        # Gene expression (normalizado por longitud de gen y profundidad de secuenciación)
-# data_clinical_patient.txt    # Clinical data (está la supervivencia (OS_STATUS y OS_MONTHS))
+# Archivos:
+# data_mrna_seq_tpm.txt        # Expresión génica (normalizado por longitud de gen y profundidad de secuenciación)
+# data_clinical_patient.txt    # Datos clínicos (está la supervivencia (OS_STATUS y OS_MONTHS))
 # data_mutations.txt           # Vital para identificar quién tiene mutación en EGFR o KRAS
 # -------------------------------------------
 
