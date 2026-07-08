@@ -1,11 +1,13 @@
-# TFM - New Analysis with raw counts 
+# TFM - Análisis de Expresión Diferencial con conteos crudos
 # Latest date: 25/06/2026
-# Author: Marina Delgado Valero
-# Purpose:
-# - Differential expression analysis reported in my Master's thesis.
-# - This script corresponds to the methodological validation of the exploratory analysis performed in ProyectoTFM.R.
+# Autor: Marina Delgado Valero
+# Máster Universitario en Bioinformática (VIU)
+# Objetivo:
+# - Realizar el análisis de expresión diferencial definitivo del TFM utilizando conteos crudos de RNA-seq y el método limma-voom.
+# Este análisis se empleó para validar las diferencias transcriptómicas 
+# entre tumores con mutaciones en EGFR y KRAS y corresponde al DEA reportado en la memoria.
 # --------------------------------------------
-# Data files:
+# Archivos:
 # data_mrna_seq_read_counts.txt # Conteos crudos
 # data_mrna_seq_tpm.txt        # Gene expression (normalizado por longitud de gen y profundidad de secuenciación)
 # data_clinical_patient.txt    # Clinical data (está la supervivencia (OS_STATUS y OS_MONTHS))
@@ -203,11 +205,14 @@ print(top_go_egfr_new[, c("Term", "N", "EGFR", "P.EGFR")])
 print("--- TOP 10 PROCESOS BIOLÓGICOS (KRAS) ---")
 print(top_go_kras_new[, c("Term", "N", "KRAS", "P.KRAS")])
 
-#### PRINCIPAL COMPONENT ANALYSIS (PCA) ####
-# PCA is used as an unsupervised exploratory analysis to evaluate whether 
-# global gene expression profiles separate EGFR-mutated and KRAS-mutated tumours
+#### 3. PRINCIPAL COMPONENT ANALYSIS (PCA) ####
+# El PCA se utiliza como análisis exploratorio no supervisado para evaluar si los perfiles
+# transcriptómicos permiten distinguir los tumores con mutaciones en EGFR y KRAS.
 
-#A) PCA total
+# A) PCA basado en los 500 genes con mayor variabilidad
+# Este análisis resume la variabilidad transcriptómica global sin seleccionar
+# previamente genes por significación estadística.
+
 # 1. PCA rápido con la función incorporada de limma
 pca_res_new <- plotMDS(v, top = 500, plot = FALSE) 
 # Usamos los 500 genes que más varían
@@ -223,7 +228,10 @@ ggplot(df_pca_new, aes(x = PC1, y = PC2, color = Grupo)) +
   labs(title = "PCA: Separación entre EGFR y KRAS",
        subtitle = "Basado en los 500 genes con mayor varianza")
 
-# --- NUEVO PCA: Basado solo en genes diferencialmente expresados (FDR < 0.05) ---
+# B) PCA basado únicamente en genes diferencialmente expresados
+# Tras identificar los genes con FDR < 0.05, se realiza un nuevo PCA
+# utilizando únicamente estos genes para evaluar si las diferencias
+# transcriptómicas entre EGFR y KRAS son más evidentes.
 
 # 1. Identificar genes con FDR < 0.05 (significativos)
 genes_significativos_new <- rownames(res_dea_new[res_dea_new$adj.P.Val < 0.05, ])
@@ -250,7 +258,14 @@ ggplot(df_pca_sig_new, aes(x = PC1, y = PC2, color = Grupo)) +
   scale_color_manual(values = c("KRAS_mut" = "#F8766D", "EGFR_mut" = "#00BFC4"))
 
 
-#--------JUSTIFICACIÓN -------------
+#### 4. VALIDACIÓN DE LA FIRMA TRANSCRIPTÓMICA ####
+# La firma pronóstica (MALSU1, PSPH, SLC52A1 y LINC01132) fue obtenida inicialmente mediante
+# el análisis exploratorio descrito en ProyectoTFM.R y posteriormente seleccionada 
+# por su valor pronóstico.
+
+# En este análisis se comprueba si dichos genes también presentan expresión diferencial 
+# significativa utilizando el DEA realizado con conteos crudos y limma-voom.
+
 res_dea_new[res_dea_new$SYMBOL %in%
           c("MALSU1","PSPH","SLC52A1","LINC01132"),
         c("SYMBOL","logFC","adj.P.Val")]
