@@ -14,7 +14,7 @@ This repository contains the R scripts used in my Master's Thesis:
 ## Dataset:
 The analyses were performed using the **TCGA-LUAD** cohort.
 Clinical, mutation and RNA-seq data can be downloaded from:
-- cBioPortal: https://www.cbioportal.org/study/summary?id=luad_tcga_gdc
+- **cBioPortal**: https://www.cbioportal.org/study/summary?id=luad_tcga_gdc
 
 ## Scripts:
 - **ProyectoTFM.R**	Main workflow including survival analyses, Risk Score construction and downstream analyses
