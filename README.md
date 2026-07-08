@@ -26,4 +26,4 @@ Master's Degree in Bioinformatics
 Universidad Internacional de Valencia (VIU)
 
 ## Requirements
-The scripts were developed in **R (version 4.0.2)** and require the installation of the corresponding R packages used throughout the analyses.
+The scripts were developed in **R (version 4.0.2)** in **RStudio** and require the installation of the corresponding R packages used throughout the analyses.
