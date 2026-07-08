@@ -263,8 +263,9 @@ ggplot(df_pca_sig_new, aes(x = PC1, y = PC2, color = Grupo)) +
 # el análisis exploratorio descrito en ProyectoTFM.R y posteriormente seleccionada 
 # por su valor pronóstico.
 
-# En este análisis se comprueba si dichos genes también presentan expresión diferencial 
+# En este análisis se comprueba si estos genes también presentan expresión diferencial 
 # significativa utilizando el DEA realizado con conteos crudos y limma-voom.
+# Este análisis se utilizó como validación biológica adicional.
 
 res_dea_new[res_dea_new$SYMBOL %in%
           c("MALSU1","PSPH","SLC52A1","LINC01132"),
