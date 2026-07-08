@@ -1,7 +1,9 @@
-
 # TFM - New Analysis with raw counts 
 # Latest date: 25/06/2026
 # Author: Marina Delgado Valero
+# Purpose:
+# - Differential expression analysis reported in my Master's thesis.
+# - This script corresponds to the methodological validation of the exploratory analysis performed in ProyectoTFM.R.
 # --------------------------------------------
 # Data files:
 # data_mrna_seq_read_counts.txt # Conteos crudos
@@ -40,23 +42,24 @@ raw_counts_subset <- round(raw_counts_subset)
 library(limma)
 library(edgeR)
 
-##Analisis DEA con los conteos crudos
+#### 1. DIFFERENTIAL EXPRESSION ANALYSIS (FINAL DEA) ####
+## Este analisis compara tumores EGFR-mutado y KRAS-mutado usando datos de conteo crudos RNA-seq y el flujo limma-voom.
 # 1. Definir los pacientes del DEA (EGFR vs KRAS)
 pacientes_dea_new <- which(clinical_final$Grupo_Estudio %in% c("EGFR_mut", "KRAS_mut"))
-# Usamos raw_counts_subset (que ya limpiamos para que tenga los mismos pacientes)
+# Usar raw_counts_subset (que ya limpiamos para que tenga los mismos pacientes)
 counts_dea <- raw_counts_subset[, pacientes_dea_new]
 grupo_dea_new <- factor(clinical_final$Grupo_Estudio[pacientes_dea_new], levels = c("KRAS_mut", "EGFR_mut"))
 
-# 1. Preparar la anotación desde cero (usando el objeto org.Hs.eg.db)
+# 2. Preparar la anotación desde cero (usando el objeto org.Hs.eg.db)
 library(org.Hs.eg.db)
 
-# Seleccionamos información
+## Seleccionamos información
 genes_info_new <- AnnotationDbi::select(org.Hs.eg.db, 
                                     keys = rownames(raw_counts_subset),
                                     columns = c("SYMBOL", "GENENAME"), 
                                     keytype = "ENTREZID")
 
-# 2. Limpieza de duplicados 
+# 3. Limpieza de duplicados 
 genes_info_new <- genes_info_new[!duplicated(genes_info_new$ENTREZID), ]
 
 ## Forzamos a que 'genes_info_new' siga el MISMO orden que 'raw_counts_subset'
@@ -64,42 +67,42 @@ genes_info_new <- genes_info_new[match(rownames(raw_counts_subset), genes_info_n
 ## Comprobación final
 all(rownames(raw_counts_subset) == genes_info_new$ENTREZID)
 
-# 1. Crear objeto DGEList
+# 4. Crear objeto DGEList
 dge <- DGEList(counts = counts_dea)
 
-# 2. Filtrado de baja expresión (Para quitar genes que no aportan nada)
+# 5. Filtrado de baja expresión (Para quitar genes que no aportan nada)
 design_new <- model.matrix(~grupo_dea_new)
 keep <- filterByExpr(dge, design_new)
 dge <- dge[keep, , keep.lib.sizes=FALSE]
 
-# 3. Normalización (Calcula factores que corrigen diferencias de secuenciación)
+# 6. Normalización (Calcular factores que corrigen diferencias de secuenciación)
 dge <- calcNormFactors(dge)
 
-# 4. VOOM (Transformación necesaria para usar limma con conteos)
+# 7. VOOM (Transformación necesaria para usar limma con conteos)
 v <- voom(dge, design_new, plot=TRUE) 
 
-# 5. Ajuste del modelo lineal
+# 8. Ajuste del modelo lineal
 fit_new <- lmFit(v, design_new)
 fit_new <- eBayes(fit_new)
 
-# 6. Obtención de resultados (Top Table)
+# 9. Obtención de resultados (Top Table)
 res_dea_new <- topTable(fit_new, coef = 2, number = Inf)
 
-# 7. Integrar la anotación que ya tenías preparada
-# Usamos el 'match' con los rownames de res_dea para alinear los símbolos
+# 10. Integrar la anotación que ya había preparada
+# Usar 'match' con los rownames de res_dea para alinear los símbolos
 res_dea_new$SYMBOL <- genes_info_new$SYMBOL[match(rownames(res_dea_new), genes_info_new$ENTREZID)]
 res_dea_new$GENENAME <- genes_info_new$GENENAME[match(rownames(res_dea_new), genes_info_new$ENTREZID)]
 
-# 8. Ordenar por significancia estadística 
+# 11. Ordenar por significancia estadística 
 res_dea_new <- res_dea_new[order(res_dea_new$adj.P.Val), ]
 
 ## Mira los 10 genes que más diferencian entre EGFR y KRAS
 head(res_dea_new, 10)
 
-# 6.Volcano plot
+# 12.Volcano plot
 library(ggplot2)
 
-##Definir los colores y etiquetas
+## Definir los colores y etiquetas
 res_dea_new$significado <- "No Sig"
 res_dea_new$significado[res_dea_new$logFC > 1 & res_dea_new$adj.P.Val < 0.05] <- "Up en EGFR"
 res_dea_new$significado[res_dea_new$logFC < -1 & res_dea_new$adj.P.Val < 0.05] <- "Up en KRAS"
@@ -127,7 +130,7 @@ ggplot(res_dea_new, aes(x = logFC, y = -log10(adj.P.Val), color = significado)) 
             color = "black",
             fontface = "bold")
 
-# 7. Tabla top 15 genes
+# 13. Tabla top 15 genes
 ## Extraemos exactamente los mismos 15 genes escritos en el gráfico
 tabla_final_new <- head(res_dea_new[, c("SYMBOL", "logFC", "adj.P.Val")], 15)
 
@@ -143,30 +146,30 @@ tabla_final_new$logFC <- round(tabla_final_new$logFC, 2)
 ## Mostrar la tabla
 print(tabla_final_new)
 
-# 8. Pheatmap final
+# 14. Pheatmap final
 library(pheatmap)
 
-# Top 30 genes más significativos
+## Top 30 genes más significativos
 top_30_ids_new <- rownames(res_dea_new)[1:30]
 top_30_symbols_new <- res_dea_new$SYMBOL[1:30]
 
-# Comprobar que sale 0
+## Comprobar que sale 0
 sum(duplicated(res_dea_new$SYMBOL[1:30]))
 
-# Matriz voom
+## Matriz voom
 matriz_hp_new <- v$E[top_30_ids_new, ]
 
-# nombres de genes
+## nombres de genes
 rownames(matriz_hp_new) <- res_dea_new$SYMBOL[1:30]
 
-# anotación de columnas
+## anotación de columnas
 annotation_col_new <- data.frame(
   Mutacion = grupo_dea_new
 )
 
 rownames(annotation_col_new) <- colnames(matriz_hp_new)
 
-# heatmap
+## heatmap
 pheatmap(
   matriz_hp_new,
   scale = "row",
@@ -177,15 +180,15 @@ pheatmap(
   color = colorRampPalette(c("navy","white","firebrick3"))(100)
 )
 
-#### 4. GEN ONTOLOGY ANALYSIS ####
+#### 2. GEN ONTOLOGY ANALYSIS ####
 library(limma)
 
-# 1. Seleccionamos los genes significativos (FDR < 0.05)
-## Separamos los que suben en EGFR de los que suben en KRAS
+# 1. Seleccionar los genes significativos (FDR < 0.05)
+## Separar los que suben en EGFR de los que suben en KRAS
 genes_up_egfr_new <- rownames(res_dea_new[res_dea_new$logFC > 0 & res_dea_new$adj.P.Val < 0.05, ])
 genes_up_kras_new <- rownames(res_dea_new[res_dea_new$logFC < 0 & res_dea_new$adj.P.Val < 0.05, ])
 
-# 2. Ejecutamos el análisis de Gene Ontology (GO)
+# 2. Ejecutar el análisis de Gene Ontology (GO)
 go_result_new <- goana(list(EGFR = genes_up_egfr_new, KRAS = genes_up_kras_new), 
                    species = "Hs")
 
@@ -200,7 +203,10 @@ print(top_go_egfr_new[, c("Term", "N", "EGFR", "P.EGFR")])
 print("--- TOP 10 PROCESOS BIOLÓGICOS (KRAS) ---")
 print(top_go_kras_new[, c("Term", "N", "KRAS", "P.KRAS")])
 
-######## PCA
+#### PRINCIPAL COMPONENT ANALYSIS (PCA) ####
+# PCA is used as an unsupervised exploratory analysis to evaluate whether 
+# global gene expression profiles separate EGFR-mutated and KRAS-mutated tumours
+
 #A) PCA total
 # 1. PCA rápido con la función incorporada de limma
 pca_res_new <- plotMDS(v, top = 500, plot = FALSE) 
