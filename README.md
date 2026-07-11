@@ -27,3 +27,6 @@ Universidad Internacional de Valencia (VIU)
 
 ## Requirements
 The scripts were developed in **R (version 4.0.2)** in **RStudio** and require the installation of the corresponding R packages used throughout the analyses.
+
+## Reproducibility
+For full reproducibility, the file **sessionInfo.txt** is included in this repository. It contains the complete computational environment used in this project, including the R version, operating system and versions of the installed packages.
